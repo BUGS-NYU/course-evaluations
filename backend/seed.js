@@ -14,7 +14,10 @@ const dbName = 'courseEvaluations';
 const dataFilesPath = join(__dirname, '/data');
 const metadataTokens = [
   { property: 'term', parse: (rawObj) => rawObj.metadata['Term'] },
-  { property: 'description', parse: (rawObj) => rawObj.metadata['Class Description'] },
+  {
+    property: 'description',
+    parse: (rawObj) => rawObj.metadata['Class Description'].replace(/\s\s+/g, ' '),
+  },
   { property: 'location', parse: (rawObj) => rawObj.metadata['Location'] },
   { property: 'instructors', parse: (rawObj) => rawObj.metadata['Instructor(s)'].split(', ') },
   { property: 'totalEnrolled', parse: (rawObj) => Number(rawObj.metadata['Total Enrolled']) },
