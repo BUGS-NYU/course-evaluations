@@ -1,15 +1,15 @@
-import { Router } from "express";
-import * as fs from "fs";
-import * as path from "path";
+import { Router } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export const coursesRouter = Router();
 
 function getCourseData(term?: string, school?: string, subject?: string) {
-  const files = fs.readdirSync("data/");
+  const files = fs.readdirSync('data/');
 
   const courseData = files.map((fileName) => {
     const data = path.parse(fileName).name;
-    const [term, school, subject] = data.split("_");
+    const [term, school, subject] = data.split('_');
     return {
       term,
       school,
@@ -28,7 +28,7 @@ function getCourseData(term?: string, school?: string, subject?: string) {
   return filteredData;
 }
 
-coursesRouter.get("/course-list/", (req, res) => {
+coursesRouter.get('/course-list/', (req, res) => {
   const { term, school, subject } = req.body;
 
   const courseData = getCourseData(term, school, subject);
@@ -36,7 +36,7 @@ coursesRouter.get("/course-list/", (req, res) => {
   const fullCourseData = courseData.flatMap((course) => {
     const { term, school, subject, fileName } = course;
     const coursesData = JSON.parse(
-      fs.readFileSync("data/" + fileName, { encoding: "utf8" })
+      fs.readFileSync('data/' + fileName, { encoding: 'utf8' }),
     ).coursesData;
 
     return coursesData.map((course: any) => {
@@ -44,7 +44,7 @@ coursesRouter.get("/course-list/", (req, res) => {
         term,
         school,
         subject,
-        name: course["metadata"]["Class Description"],
+        name: course['metadata']['Class Description'],
       };
     });
   });
@@ -52,16 +52,16 @@ coursesRouter.get("/course-list/", (req, res) => {
   res.json(fullCourseData);
 });
 
-coursesRouter.get("/course-details/", (req, res) => {
+coursesRouter.get('/course-details/', (req, res) => {
   const { term, school, subject, name } = req.body;
 
   const fileName = `${term}_${school}_${subject}.json`;
   const coursesData = JSON.parse(
-    fs.readFileSync("data/" + fileName, { encoding: "utf8" })
+    fs.readFileSync('data/' + fileName, { encoding: 'utf8' }),
   ).coursesData;
 
   const courseData = coursesData.find((course: any) => {
-    return name === course["metadata"]["Class Description"];
+    return name === course['metadata']['Class Description'];
   });
 
   res.send(courseData);
