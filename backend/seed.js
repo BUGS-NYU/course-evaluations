@@ -1,4 +1,5 @@
 import * as dotenv from 'dotenv';
+import * as readline from 'readline/promises';
 import { MongoClient } from 'mongodb';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
@@ -64,4 +65,13 @@ const seedDB = async () => {
   }
 };
 
-seedDB();
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+const answer = await rl.question(
+  'Are you sure you want to seed the DB? This process will drop the current collection (Y/n): ',
+);
+
+if (answer === 'Y') {
+  seedDB();
+}
+
+rl.close();
