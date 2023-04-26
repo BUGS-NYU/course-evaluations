@@ -1,14 +1,9 @@
-import * as dotenv from 'dotenv';
-import * as readline from 'readline/promises';
-import { MongoClient } from 'mongodb';
-import { promises as fs } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join, extname } from 'path';
-
-dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+require('dotenv').config();
+const readline = require('readline/promises');
+const { MongoClient } = require('mongodb');
+const { promises: fs } = require('fs');
+const { fileURLToPath } = require('url');
+const { dirname, join, extname } = require('path');
 
 const dbName = 'courseEvaluations';
 const dataFilesPath = join(__dirname, '/data');
@@ -29,7 +24,7 @@ const metadataTokens = [
 ];
 
 const seedDB = async () => {
-  const client = new MongoClient(process.env.ATLAS_URI, { useNewUrlParser: true });
+  const client = new MongoClient(process.env.ATLAS_URI);
 
   try {
     await client.connect();
@@ -68,13 +63,17 @@ const seedDB = async () => {
   }
 };
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-const answer = await rl.question(
-  'Are you sure you want to seed the DB? This process will drop the current collection (Y/n): ',
-);
+const promptSeed = async () => {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const answer = await rl.question(
+    'Are you sure you want to seed the DB? This process will drop the current collection (Y/n): ',
+  );
 
-if (answer === 'Y') {
-  seedDB();
-}
+  if (answer === 'Y') {
+    await seedDB();
+  }
 
-rl.close();
+  rl.close();
+};
+
+promptSeed();
