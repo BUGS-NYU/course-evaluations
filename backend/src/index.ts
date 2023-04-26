@@ -10,7 +10,7 @@ const app = express();
 connectToDB();
 
 app.use(cors());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use('/', coursesRouter);
@@ -24,4 +24,3 @@ app.listen(PORT, () => {
 const close = () => disconnectFromDB();
 
 export default close;
-
