@@ -6,6 +6,7 @@ const { fileURLToPath } = require('url');
 const { dirname, join, extname } = require('path');
 
 const dbName = 'courseEvaluations';
+const collectionName = 'evaluations';
 const dataFilesPath = join(__dirname, '/data');
 const metadataTokens = [
   { property: 'term', parse: (rawObj) => rawObj.metadata['Term'] },
@@ -24,20 +25,20 @@ const metadataTokens = [
 ];
 
 const createSearchIndexes = (...args) => {
-  const str = args.map(arg => arg.trim().replace(/\s\s+/g, ' ')).join(' ');
+  const str = args.map((arg) => arg.trim().replace(/\s\s+/g, ' ')).join(' ');
   let res = [];
-  const min = 3;
-  if (!!str && str.length > min) {
-    str.split(" ").forEach((token) => {
+  const min = 2;
+  return Array.from(
+    str.split(' ').reduce((set, token) => {
       if (token.length >= min) {
         for (let i = min; i <= str.length && i <= token.length; ++i) {
-          res = [...res, token.substring(0, i)];
+          set.add(token.substring(0, i));
         }
       }
-    });
-  }
-  return res.length === 0 ? [str] : res;
-}
+      return set;
+    }, new Set()),
+  );
+};
 
 const seedDB = async () => {
   const client = new MongoClient(process.env.ATLAS_URI);
@@ -46,10 +47,14 @@ const seedDB = async () => {
     await client.connect();
     console.log('Connected to the server...');
 
-    const collection = client.db(dbName).collection('evaluations');
+    const db = client.db(dbName);
+    const collection = client.db(dbName).collection(collectionName);
+    const collectionInfo = await db.listCollections({ name: collectionName }).next();
 
     // remove the entire collection before seeding it once again
-    await collection.drop();
+    if (collectionInfo) {
+      await collection.drop();
+    }
 
     const entries = [];
     const fileNames = await fs.readdir(dataFilesPath);
@@ -66,14 +71,16 @@ const seedDB = async () => {
           course.metadata = rawCourse.metadata;
           metadataTokens.forEach(({ property, parse }) => (course[property] = parse(rawCourse)));
           course.questionSections = rawCourse.questionSections;
-          course.searchIndexes = createSearchIndexes(course.description, course.instructors.join(' '));
+          course.searchIndexes = createSearchIndexes(
+            course.description,
+            course.instructors.join(' '),
+          );
           entries.push(course);
         });
       }
     }
 
     await collection.insertMany(entries);
-    // await collection.createIndex({description: 'text', "instructors.text": "text"}, {name: "searchIndex"});
     console.log('Successfully seeded.');
     client.close();
   } catch (err) {
