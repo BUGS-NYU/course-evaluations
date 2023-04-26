@@ -23,6 +23,22 @@ const metadataTokens = [
   },
 ];
 
+const createSearchIndexes = (...args) => {
+  const str = args.map(arg => arg.trim().replace(/\s\s+/g, ' ')).join(' ');
+  let res = [];
+  const min = 3;
+  if (!!str && str.length > min) {
+    str.split(" ").forEach((token) => {
+      if (token.length >= min) {
+        for (let i = min; i <= str.length && i <= token.length; ++i) {
+          res = [...res, token.substring(0, i)];
+        }
+      }
+    });
+  }
+  return res.length === 0 ? [str] : res;
+}
+
 const seedDB = async () => {
   const client = new MongoClient(process.env.ATLAS_URI);
 
@@ -50,12 +66,14 @@ const seedDB = async () => {
           course.metadata = rawCourse.metadata;
           metadataTokens.forEach(({ property, parse }) => (course[property] = parse(rawCourse)));
           course.questionSections = rawCourse.questionSections;
+          course.searchIndexes = createSearchIndexes(course.description, course.instructors.join(' '));
           entries.push(course);
         });
       }
     }
 
     await collection.insertMany(entries);
+    // await collection.createIndex({description: 'text', "instructors.text": "text"}, {name: "searchIndex"});
     console.log('Successfully seeded.');
     client.close();
   } catch (err) {
