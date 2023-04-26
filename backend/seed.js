@@ -24,10 +24,11 @@ const metadataTokens = [
   },
 ];
 
+// creates N-grams of each search token starting from 2
 const createSearchIndexes = (...args) => {
   const str = args.map((arg) => arg.trim().replace(/\s\s+/g, ' ')).join(' ');
-  let res = [];
   const min = 2;
+
   return Array.from(
     str.split(' ').reduce((set, token) => {
       if (token.length >= min) {
