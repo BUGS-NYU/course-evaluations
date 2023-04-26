@@ -1,68 +1,43 @@
-import { Router } from 'express';
-import * as fs from 'fs';
-import * as path from 'path';
+import { Router, Request, Response, NextFunction } from 'express';
+import { getEvaluationsCollection } from '../db';
+import { validateSearch } from '../middlewares/validations';
 
 export const coursesRouter = Router();
 
-function getCourseData(term?: string, school?: string, subject?: string) {
-  const files = fs.readdirSync('data/');
-
-  const courseData = files.map((fileName) => {
-    const data = path.parse(fileName).name;
-    const [term, school, subject] = data.split('_');
-    return {
-      term,
-      school,
-      subject,
-      fileName,
-    };
-  });
-
-  const filteredData = courseData.filter((course) => {
-    const termMatching = !term || term === course.term;
-    const schoolMatching = !school || school === course.school;
-    const subjectMatching = !subject || subject === course.subject;
-    return termMatching && schoolMatching && subjectMatching;
-  });
-
-  return filteredData;
-}
-
-coursesRouter.get('/course-list/', (req, res) => {
-  const { term, school, subject } = req.body;
-
-  const courseData = getCourseData(term, school, subject);
-
-  const fullCourseData = courseData.flatMap((course) => {
-    const { term, school, subject, fileName } = course;
-    const coursesData = JSON.parse(
-      fs.readFileSync('data/' + fileName, { encoding: 'utf8' }),
-    ).coursesData;
-
-    return coursesData.map((course: any) => {
-      return {
-        term,
-        school,
-        subject,
-        name: course['metadata']['Class Description'],
+coursesRouter.get(
+  '/search',
+  validateSearch,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { phrase } = req.query;
+      const perPage = parseInt(req.query.perPage as string);
+      const currPage = parseInt(req.query.currPage as string);
+      const query = {
+        $or: [
+          { description: { $regex: phrase, $options: 'i' } },
+          { instructors: { $regex: phrase, $options: 'i' } },
+        ],
       };
-    });
-  });
+      const totalItems = await getEvaluationsCollection().countDocuments(query);
+      const data = await getEvaluationsCollection()
+        .find(query)
+        .skip((currPage - 1) * perPage)
+        .limit(perPage)
+        .toArray();
+      const totalPages = Math.ceil(totalItems / perPage);
 
-  res.json(fullCourseData);
-});
-
-coursesRouter.get('/course-details/', (req, res) => {
-  const { term, school, subject, name } = req.body;
-
-  const fileName = `${term}_${school}_${subject}.json`;
-  const coursesData = JSON.parse(
-    fs.readFileSync('data/' + fileName, { encoding: 'utf8' }),
-  ).coursesData;
-
-  const courseData = coursesData.find((course: any) => {
-    return name === course['metadata']['Class Description'];
-  });
-
-  res.send(courseData);
-});
+      return res.json({
+        data,
+        pagination: {
+          currPage,
+          perPage,
+          totalPages,
+          totalItems,
+        },
+      });
+    } catch (err) {
+      console.log('Error while attempting search');
+      return next(err);
+    }
+  },
+);
