@@ -1,14 +1,14 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import {createBrowserRouter, RouterProvider} from 'react-router-dom';
-import Root from './Root.tsx';
-import './global.css'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import Root from 'components/Root';
+import './global.css';
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Root />
-  }
+    path: '/',
+    element: <Root />,
+  },
 ]);
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -16,4 +16,3 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <RouterProvider router={router} />
   </React.StrictMode>,
 );
-

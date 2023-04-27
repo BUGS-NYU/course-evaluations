@@ -1,23 +1,62 @@
-import { useCallback } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
-import qs from 'qs';
-
-const parseQuery = (query) => qs.parse(query, { ignoreQueryPrefix: true });
+import { useCallback, useRef, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 export const useQueryState = (query: string) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const setQuery = useCallback(
-    (value: string) => {
-      const currentQueries = parseQuery(location.search);
+    (value) => {
+      const modifiedSearchParams = new URLSearchParams(searchParams.entries());
 
-      const queryString = qs.stringify({ ...currentQueries, [query]: value }, { skipNulls: true });
-      navigate(`${location.pathname}?${queryString}`);
+      if (value === '') {
+        modifiedSearchParams.delete(query);
+      } else {
+        modifiedSearchParams.set(query, value);
+      }
+
+      setSearchParams(modifiedSearchParams);
     },
-    [navigate, location, query],
+    [searchParams],
   );
 
-  return [parseQuery(location.search)[query], setQuery];
+  return [searchParams.get(query) || '', setQuery];
+};
+
+export const usePhraseQueryState = () => useQueryState('phrase');
+
+export const useCurrPageQueryState = () => useQueryState('currPage');
+
+export const usePrevious = <T>(value: T) => {
+  const ref = useRef<T>(value);
+
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+
+  return ref.current;
+};
+
+export const useApiWrapper = <T>(
+  initialData: T,
+  fetchFunc: (...args: Array<any>) => Promise<T>,
+) => {
+  const [data, setData] = useState(initialData);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  const fetchApi = async (...args: Array<any>) => {
+    try {
+      setIsLoading(true);
+      const res = await fetchFunc(...args);
+      setData(res);
+      console.log(res);
+    } catch (err) {
+      setIsError(true);
+      console.log(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { fetchApi, data, isLoading, isError };
 };
