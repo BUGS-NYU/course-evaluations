@@ -3,11 +3,10 @@ dotenv.config();
 
 import { Locator, Page, chromium } from "playwright";
 import * as fs from "fs";
-
 import assert from "assert";
 
-const DEV_MODE = true;
-const STRICT_MODE = true;
+import config from "./config";
+const { devMode, strictMode } = config;
 
 const ALBERT_PAGE = "http://albert.nyu.edu/albert_index.html";
 
@@ -78,15 +77,15 @@ async function scrapeEvaluations(session: ScrapingSession) {
   const termsCombobox = frame.getByRole("combobox", {
     name: "*1. Select a Term (required) :",
   });
-  const terms = await getComboboxOptions(termsCombobox);
+  const terms = config.terms ?? (await getComboboxOptions(termsCombobox));
   log(false, `${terms.length} terms: ${terms}`);
-  assert(STRICT_MODE && terms.length > 0);
+  assert(!strictMode || terms.length > 0);
 
   // scrape each term
   for (const term of terms) {
     // select term
     const response = waitForAlbertResponse(session);
-    await termsCombobox.selectOption({ value: term });
+    await termsCombobox.selectOption(term);
     await response;
     session.term = term;
 
@@ -106,7 +105,7 @@ async function scrapeTerm(session: ScrapingSession) {
   });
   const schools = await getComboboxOptions(schoolsCombobox);
   log(false, `${schools.length} schools: ${schools}`);
-  assert(STRICT_MODE && schools.length > 0);
+  assert(!strictMode || schools.length > 0);
 
   // scrape each school
   for (const school of schools) {
@@ -115,7 +114,7 @@ async function scrapeTerm(session: ScrapingSession) {
 
     // select term
     const response = waitForAlbertResponse(session);
-    await schoolsCombobox.selectOption({ value: school });
+    await schoolsCombobox.selectOption(school);
     await response;
     session.school = school;
 
@@ -135,13 +134,13 @@ async function scrapeSchool(session: ScrapingSession) {
   });
   const subjects = await getComboboxOptions(subjectsCombobox);
   log(false, `${subjects.length} subjects: ${subjects}`);
-  assert(STRICT_MODE && subjects.length > 0);
+  assert(!strictMode || subjects.length > 0);
 
   // scrape each subject
   for (const subject of subjects) {
     // select term
     const response = waitForAlbertResponse(session);
-    await subjectsCombobox.selectOption({ value: subject }); // TODO: sometimes fails
+    await subjectsCombobox.selectOption(subject); // TODO: sometimes fails
     await response;
     session.subject = subject;
 
@@ -184,28 +183,30 @@ async function scrapeSubject(session: ScrapingSession) {
   await frame.getByText("Filter Results By:").waitFor();
   const courses = await frame.locator(".ps_grid-row").all();
   log(false, `${courses.length} courses`);
-  assert(courses.length > 0);
+  if (courses.length === 0) {
+    await frame.getByRole("button", { name: "OK" }).click();
+  } else {
+    // scrape every course
+    for (const course of courses) {
+      // click into evaluations page
+      const evaluationsResponse = waitForAlbertResponse(session);
+      await course
+        .getByRole("button", { name: "Evaluation Results for" })
+        .click();
+      await evaluationsResponse;
 
-  // scrape every course
-  for (const course of courses) {
-    // click into evaluations page
-    const evaluationsResponse = waitForAlbertResponse(session);
-    await course
-      .getByRole("button", { name: "Evaluation Results for" })
-      .click();
-    await evaluationsResponse;
+      // if this element exists, we are in evaluations data page
+      await frame.getByText("Note: Score range is 1 - 5").waitFor();
+      coursesData.push(await scrapeCourse(session));
 
-    // if this element exists, we are in evaluations data page
-    await frame.getByText("Note: Score range is 1 - 5").waitFor();
-    coursesData.push(await scrapeCourse(session));
-
-    // exit evaluations page
-    const exitEvaluationsResponse = waitForAlbertResponse(session);
-    await frame
-      .getByRole("link", { name: "> Return to Class List" })
-      .first()
-      .click();
-    await exitEvaluationsResponse;
+      // exit evaluations page
+      const exitEvaluationsResponse = waitForAlbertResponse(session);
+      await frame
+        .getByRole("link", { name: "> Return to Class List" })
+        .first()
+        .click();
+      await exitEvaluationsResponse;
+    }
   }
 
   // exit out of courses page
@@ -241,7 +242,7 @@ async function scrapeCourse(session: ScrapingSession) {
   }
 
   log(false, `Scraping course: ${metadata["Class Description"]}`);
-  assert(metadata["Class Description"] !== undefined);
+  assert(!strictMode || metadata["Class Description"] !== undefined);
 
   const sections = await frame.locator(".ps_box-scrollarea-row").all();
   log(true, `${sections.length} sections of questions`);
@@ -267,7 +268,7 @@ async function scrapeCourse(session: ScrapingSession) {
 
     const questions = await section.getByRole("row").all();
     log(true, `${questions.length} questions`);
-    assert(questions.length > 0);
+    assert(!strictMode || questions.length > 0);
 
     for (const questionLocator of questions) {
       const question = await questionLocator
@@ -281,7 +282,7 @@ async function scrapeCourse(session: ScrapingSession) {
           .innerText()
       );
       log(true, question, average);
-      assert(!Number.isNaN(average));
+      assert(!strictMode || !Number.isNaN(average));
       questionData.push({ question, average });
     }
 
@@ -318,7 +319,7 @@ async function getComboboxOptions(comboboxLocator: Locator) {
 }
 
 function log(devOnly: boolean, message?: any, ...optionalParams: any[]) {
-  if ((devOnly && DEV_MODE) || !devOnly) {
+  if ((devOnly && devMode) || !devOnly) {
     console.log(message, ...optionalParams);
   }
 }
@@ -332,7 +333,7 @@ async function main() {
   log(false, "Starting scraper");
 
   // create current scraping session
-  const browser = await chromium.launch({ headless: DEV_MODE ? false : true });
+  const browser = await chromium.launch({ headless: devMode ? false : true });
   const context = await browser.newContext();
   const page = await context.newPage();
   const session: ScrapingSession = {
