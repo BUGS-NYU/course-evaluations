@@ -1,9 +1,17 @@
 import { FunctionalComponent } from 'react';
-import { useCurrPageQueryState } from 'lib/hooks.ts';
+import { useSearchParams } from 'react-router-dom';
 import styles from './styles.module.css';
 
 export const PageCounter: FunctionalComponent<{ totalPages: number }> = ({ totalPages }) => {
-  const [currPage, setCurrPage] = useCurrPageQueryState();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const currPage = Number(searchParams.get('currPage') || 1);
+
+  const setCurrPage = (page: number) =>
+    setSearchParams((prevParams) => {
+      prevParams.set('currPage', page);
+      return prevParams;
+    });
 
   if (totalPages < 1) {
     return null;
@@ -12,7 +20,7 @@ export const PageCounter: FunctionalComponent<{ totalPages: number }> = ({ total
   const renderPages = [...new Array(totalPages)].map((_, page) => (
     <div
       key={page}
-      className={page + 1 === Number(currPage || 1) ? `${styles.page} ${styles.curr}` : styles.page}
+      className={page + 1 === currPage ? `${styles.page} ${styles.curr}` : styles.page}
       onClick={() => setCurrPage(page + 1)}
     >
       {page + 1}

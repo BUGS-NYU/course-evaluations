@@ -1,32 +1,5 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-
-export const useQueryState = (query: string) => {
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const setQuery = useCallback(
-    (value) => {
-      const modifiedSearchParams = new URLSearchParams(searchParams.entries());
-
-      if (value === '') {
-        modifiedSearchParams.delete(query);
-      } else {
-        modifiedSearchParams.set(query, value);
-      }
-
-      setSearchParams(modifiedSearchParams);
-    },
-    [searchParams],
-  );
-
-  return [searchParams.get(query) || '', setQuery];
-};
-
-export const usePhraseQueryState = () => useQueryState('phrase');
-
-export const useCurrPageQueryState = () => useQueryState('currPage');
-
-export const useViewingCourseIdQueryState = () => useQueryState('viewingId');
 
 export const usePrevious = <T>(value: T) => {
   const ref = useRef<T>(value);

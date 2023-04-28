@@ -1,35 +1,34 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { searchCourses } from 'lib/api.ts';
 import { SearchCoursesResponse } from 'lib/types.ts';
-import {
-  usePhraseQueryState,
-  usePrevious,
-  useApiWrapper,
-  useCurrPageQueryState,
-} from 'lib/hooks.ts';
+import { usePrevious, useApiWrapper } from 'lib/hooks.ts';
+import { useSearchParams } from 'react-router-dom';
 import debounce from 'lodash.debounce';
 
-export const useSearch = () => {
-  const [phrase] = usePhraseQueryState();
+export const useSearchCourse = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [phrase, setPhrase] = useState<string>(searchParams.get('phrase') || '');
+
   const prevPhrase = usePrevious(phrase);
-  const [currPage, setCurrPage] = useCurrPageQueryState();
+  const currPageQuery = searchParams.get('currPage');
+
   const { data, isLoading, isError, fetchApi } = useApiWrapper<SearchCoursesResponse>(
     { data: [], pagination: { currPage: 1, perPage: 20, totalItems: 0, totalPages: 0 } },
     searchCourses,
   );
 
   useEffect(() => {
-    const search = async () => await fetchApi(phrase, currPage || 1);
+    const search = async () => await fetchApi(phrase, currPageQuery || 1);
 
     if (!isLoading && !!phrase) {
       search();
     }
-  }, [currPage]);
+  }, [currPageQuery]);
 
   useEffect(() => {
     const debouncedSearch = debounce(async () => {
       await fetchApi(phrase, 1);
-      setCurrPage(1);
+      setSearchParams({ phrase });
     }, 1000);
 
     if (phrase.length > 0 && !isLoading && prevPhrase !== phrase) {
@@ -41,5 +40,5 @@ export const useSearch = () => {
     };
   }, [phrase]);
 
-  return { data, isError, isLoading };
+  return { data, isError, isLoading, changePhrase: setPhrase, phrase };
 };

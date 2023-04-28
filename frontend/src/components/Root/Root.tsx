@@ -1,7 +1,7 @@
 import { FunctionalComponent, useState } from 'react';
-import { usePhraseQueryState, useViewingCourseIdQueryState } from 'lib/hooks.ts';
+import { useSearchParams } from 'react-router-dom';
 import { BaseCourse } from 'lib/types.ts';
-import { useSearch } from './use-search.ts';
+import { useSearchCourse } from './use-search-course.ts';
 import { PageCounter } from './PageCounter';
 import { CourseModal } from './CourseModal';
 import styles from './styles.module.css';
@@ -37,10 +37,20 @@ const CourseEntry: FunctionalComponent<CourseEntryProps> = ({
 };
 
 const Root = () => {
-  const [viewingCourseIdQuery, setViewingCourseIdQuery] = useViewingCourseIdQueryState();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewingCourseIdQuery = searchParams.get('viewingId');
   const [courseId, setCourseId] = useState<string | null>(viewingCourseIdQuery || null);
-  const [phrase, setPhrase] = usePhraseQueryState();
-  const { data, isLoading } = useSearch();
+  const { data, isLoading, changePhrase, phrase } = useSearchCourse();
+
+  const setViewingCourseIdQuery = (viewingId: string) =>
+    setSearchParams((prevParams) => {
+      if (viewingId === '') {
+        prevParams.delete('viewingId');
+      } else {
+        prevParams.set('viewingId', viewingId);
+      }
+      return prevParams;
+    });
 
   const closeModal = () => {
     setCourseId(null);
@@ -63,7 +73,7 @@ const Root = () => {
         ))
       : `No results to display`;
 
-  const setSearchValue = (e) => setPhrase(e.target.value);
+  const setSearchValue = (e) => changePhrase(e.target.value);
 
   return (
     <>
