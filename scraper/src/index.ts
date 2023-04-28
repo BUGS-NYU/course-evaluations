@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv"; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 dotenv.config();
 
-import { Locator, Page, chromium } from "playwright";
+import { Locator, Page, chromium, errors } from "playwright";
 import * as fs from "fs";
 import assert from "assert";
 
@@ -184,7 +184,13 @@ async function scrapeSubject(session: ScrapingSession) {
   const courses = await frame.locator(".ps_grid-row").all();
   log(false, `${courses.length} courses`);
   if (courses.length === 0) {
-    await frame.getByRole("button", { name: "OK" }).click();
+    try {
+      await frame.getByRole("button", { name: "OK" }).click();
+    } catch (err) {
+      if (!(err instanceof errors.TimeoutError)) {
+        throw err;
+      }
+    }
   } else {
     // scrape every course
     for (const course of courses) {
@@ -325,6 +331,9 @@ function log(devOnly: boolean, message?: any, ...optionalParams: any[]) {
 }
 
 function saveData(path: string, data: SubjectData) {
+  if (!fs.existsSync("data/")) {
+    fs.mkdirSync("data/");
+  }
   fs.writeFileSync(path, JSON.stringify(data, undefined, 2) + "\n");
   log(true, `Saved data to ${path}`);
 }
@@ -354,8 +363,8 @@ async function main() {
     // start scraping course evaluations
     await scrapeEvaluations(session);
   } catch (e) {
-    await page.pause();
     console.error(e);
+    await page.pause();
   }
 }
 
