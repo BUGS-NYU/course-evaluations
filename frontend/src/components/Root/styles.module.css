@@ -1,0 +1,59 @@
+.siteContainer {
+  width: 100vw;
+  padding: 0px 20px;
+  padding-top: 80px;
+  position: relative;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #ecf0f1;
+  border: 1px solid #bdc3c7;
+  color: #bdc3c7;
+  outline: none;
+  transition: 0.2s;
+  position: relative;
+}
+
+.searchInputBg {
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 10;
+}
+
+.searchInput:focus {
+  border: 1px solid #8e44ad;
+  color: #8e44ad;
+  transition: 0.2s;
+}
+
+.courseEntry {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  background-color: #bdc3c7;
+  color: #2c3e50;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.courseEntry:hover {
+  background-color: #ecf0f1;
+  transition: 0.2s;
+}
+
+.courseEntry:hover > h1 {
+  color: #9b59b6;
+}
+
+.courseEntry > h1 {
+  font-size: 16px;
+  color: #8e44ad;
+}

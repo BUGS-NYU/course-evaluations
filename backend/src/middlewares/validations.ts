@@ -33,4 +33,11 @@ const searchSchema = z
   })
   .required();
 
+const getCourseByIdSchema = z.object({
+  params: z.object({
+    courseId: z.string({ required_error: 'Must provide courseId' }),
+  }),
+});
+
 export const validateSearch = validate(searchSchema);
+export const validateGetCourseById = validate(getCourseByIdSchema);

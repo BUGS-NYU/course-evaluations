@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { getEvaluationsCollection } from '../db';
-import { validateSearch } from '../middlewares/validations';
+import { validateSearch, validateGetCourseById } from '../middlewares/validations';
 import { escapeRegex } from '../utils';
+import { ObjectId } from 'mongodb';
 
 export const coursesRouter = Router();
 
@@ -36,6 +37,24 @@ coursesRouter.get(
       });
     } catch (err) {
       console.log('Error while attempting search');
+      return next(err);
+    }
+  },
+);
+
+coursesRouter.get(
+  '/course/:courseId',
+  validateGetCourseById,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const courseId = req.params.courseId;
+      const data = await getEvaluationsCollection().findOne(
+        { _id: new ObjectId(courseId) },
+        { projection: { searchIndexes: 0 } },
+      );
+      res.json({ data });
+    } catch (err) {
+      console.log('Error while trying to find course by id');
       return next(err);
     }
   },

@@ -1,0 +1,29 @@
+.pageList {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.page {
+  cursor: pointer;
+  margin: 5px;
+  padding: 5px 7px;
+  transition: 0.2s;
+  text-decoration: none;
+  border-radius: 3px;
+}
+
+.curr {
+  background-color: #8e44ad;
+  color: white;
+  transition: 0.2s;
+}
+
+.page:hover,
+.curr:hover {
+  background-color: #9b59b6;
+  color: white;
+  transition: 0.2s;
+}
