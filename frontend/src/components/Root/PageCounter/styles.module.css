@@ -21,9 +21,9 @@
   transition: 0.2s;
 }
 
-.page:hover, .curr:hover {
+.page:hover,
+.curr:hover {
   background-color: #9b59b6;
   color: white;
   transition: 0.2s;
 }
-
