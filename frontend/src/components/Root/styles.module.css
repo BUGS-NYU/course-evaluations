@@ -6,7 +6,7 @@
 }
 
 .searchInput {
-  width: calc(100% - 22px);
+  width: 100%;
   padding: 10px;
   border-radius: 10px;
   background-color: #ecf0f1;
@@ -35,13 +35,26 @@
 
 .courseEntry {
   width: 100%;
-  padding: 5px;
+  padding: 10px;
   margin-bottom: 10px;
-  border-radius: 10px;
-  background-color: #95a5a6;
+  border-radius: 5px;
+  background-color: #bdc3c7;
+  color: #2c3e50;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.courseEntry:hover {
+  background-color: #ecf0f1;
+  transition: 0.2s;
+}
+
+.courseEntry:hover > h1 {
+  color: #9b59b6;
 }
 
 .courseEntry > h1 {
   font-size: 16px;
+  color: #8e44ad;
 }
 

@@ -26,6 +26,8 @@ export const usePhraseQueryState = () => useQueryState('phrase');
 
 export const useCurrPageQueryState = () => useQueryState('currPage');
 
+export const useViewingCourseIdQueryState = () => useQueryState('viewingId');
+
 export const usePrevious = <T>(value: T) => {
   const ref = useRef<T>(value);
 
@@ -37,7 +39,7 @@ export const usePrevious = <T>(value: T) => {
 };
 
 export const useApiWrapper = <T>(
-  initialData: T,
+  initialData: T | null,
   fetchFunc: (...args: Array<any>) => Promise<T>,
 ) => {
   const [data, setData] = useState(initialData);
