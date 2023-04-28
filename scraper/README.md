@@ -14,7 +14,7 @@ To get a local instance running, please follow these steps.
 ### Development
 
 1. Run `npm install`
-1. Create a `.env` file if one does not already exist (see Configuration section for more)
+1. Create a `.env` file if one does not already exist (see [Configuration section](#configuration) for more)
 1. Run `npm run dev`
 
 ## Configuration
