@@ -11,6 +11,7 @@ export const useSearchCourse = () => {
 
   const prevPhrase = usePrevious(phrase);
   const currPageQuery = searchParams.get('currPage');
+  const currPhraseQuery = searchParams.get('phrase');
 
   const { data, isLoading, isError, fetchApi } = useApiWrapper<SearchCoursesResponse>(
     { data: [], pagination: { currPage: 1, perPage: 20, totalItems: 0, totalPages: 0 } },
@@ -18,9 +19,9 @@ export const useSearchCourse = () => {
   );
 
   useEffect(() => {
-    const search = async () => await fetchApi(phrase, currPageQuery || 1);
+    const search = async () => await fetchApi(phrase || currPhraseQuery, currPageQuery || 1);
 
-    if (!isLoading && !!phrase) {
+    if (!isLoading && (phrase || currPhraseQuery)) {
       search();
     }
   }, [currPageQuery]);
